@@ -1,0 +1,29 @@
+<?php
+
+namespace App\Http\Controllers\auth\admin;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\user\LoginRequest;
+use App\Traits\ResponseJson;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+
+class AuthController extends Controller
+{
+    use ResponseJson;
+
+    public function login(LoginRequest $request)
+    {
+        $model = config('auth.providers.admins.model');
+
+        $user = $model::where($request->username(), $request->input('username'))->first();
+
+        if (! $user || ! Hash::check($request->input('password'), $user->password)) {
+            return ResponseJson::failedLoginResponse();
+        }
+
+        if ($token = $user->createToken($request->userAgent(), ['admin.api'])->plainTextToken) {
+            return ResponseJson::successLoginResponse($user, $token);
+        }
+    }
+}
